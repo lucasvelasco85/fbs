@@ -45,7 +45,7 @@ BACKUP_TYPE=""
 
 FILE_LOGFILE="$FILE_BACKUP_DIR/$TODAY/backup.$TODAY.log"
 BD_LOGFILE="$BD_BACKUP_DIR/$TODAY/backup.$TODAY.log"
-
+MIRROR_LOGFILE="$MIRROR/mirror.$TODAY.log"
 
 main(){
 
@@ -63,7 +63,7 @@ main(){
 
 
 
-# Funcao de escrita no log
+# Funções de escrita nos logs
 
 writeFileLog(){
 
@@ -76,6 +76,13 @@ writeBDLog(){
 echo $(date +"%d %b  %H:%M:%S : " ) $1 >> $BD_LOGFILE
 
 }
+
+writeMirrorLog(){
+
+echo $(date +"%d %b  %H:%M:%S : " ) $1 >> $MIRROR_LOGFILE
+
+}
+
 
 removeOldBackups(){
 
@@ -108,7 +115,7 @@ for n in `seq $KEEPING_DAYS`
 
 dataBackup(){
 
-  [ -d $FILE_BACKUP_DIR/$TODAY ] || mkdir -p $FILE_BACKUP_DIR/$TODAY && touch $FILE_LOGFILE && writeFileLog "Diretorio de backup e arquivo de log criados." || logger "[SYSTEM_BACKUP] -> Arquivo de LOG do backup de arquivos não criado. O backup não será realizado" && exit 1
+[ ! -d $FILE_BACKUP_DIR/$TODAY ] && mkdir -p $FILE_BACKUP_DIR/$TODAY ; writeFileLog "Diretorio de backup e arquivo de log criados." || logger "[SYSTEM_BACKUP] -> Arquivo de LOG do backup de arquivos não criado. O backup não será realizado"
 
 writeFileLog "Inciando Backup. "
 
@@ -144,7 +151,7 @@ for dir in `echo $BACKUP_SOURCE`
 
 bdBackup(){
 
-  [ -d $BD_BACKUP_DIR/$TODAY ] || mkdir -p $BD_BACKUP_DIR/$TODAY && touch $BD_LOGFILE && writeBDLog "Diretorio de backup e arquivo de log criados." || logger "[SYSTEM_BACKUP] -> Arquivo de LOG de backup nao criado. O backup do banco de dados não será realizado" && exit 1
+[ ! -d $BD_BACKUP_DIR/$TODAY ] && mkdir -p $BD_BACKUP_DIR/$TODAY ; writeBDLog "Diretorio de backup e arquivo de log criados." || logger "[SYSTEM_BACKUP] -> Arquivo de LOG de backup nao criado. O backup do banco de dados não será realizado" 
 
 
   writeLog "Inciando Backup. "
@@ -166,13 +173,13 @@ bdBackup(){
 
 mirrorUpdate(){
 
-[ -d $MIRROR ] || mkdir -p $MIRROR && writeFileLog "Diretorio espelho criado com sucesso." || logger "[SYSTEM_BACKUP] -> Erro na criacao do diretorio de espelho de dados"
+[ ! -d $MIRROR ] && mkdir -p $MIRROR ; writeMirrorLog "Diretorio espelho criado com sucesso." || logger "[SYSTEM_BACKUP] -> Erro na criacao do diretorio de espelho de dados"
 
-writeFileLog "Sincronizando diretorio de dados."
+writeMirrorLog "Sincronizando diretórios de dados."
 
-rsync -tvruzh --delete $BACKUP_SOURCE $MIRROR >> $FILE_LOGFILE \
-&& writeFileLog "Espelho de dados atualizado com sucesso." \
-|| writeFileLog "Erro na atualizacao dos dados do espelho." 
+rsync -tvruzh --delete $BACKUP_SOURCE $MIRROR >> $MIRROR_LOGFILE \
+&& writeMirrorLog "Espelho de dados atualizado com sucesso." \
+|| writeMirrorLog "Erro na atualizacao dos dados do espelho." 
 
 }
 
