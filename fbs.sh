@@ -39,7 +39,7 @@ FB_PASS=""
 # 4 = Backup total (Arquivos e BD Firebird)
 # 5 = Backup total (Arquivos e BD Firebird) + Espelho 
 
-BACKUP_TYPE=2
+BACKUP_TYPE=""
 
 # Arquivos de Log
 
@@ -108,6 +108,8 @@ for n in `seq $KEEPING_DAYS`
 
 dataBackup(){
 
+  [ -d $FILE_BACKUP_DIR/$TODAY ] || mkdir -p $FILE_BACKUP_DIR/$TODAY && touch $FILE_LOGFILE && writeFileLog "Diretorio de backup e arquivo de log criados." || logger "[SYSTEM_BACKUP] -> Arquivo de LOG do backup de arquivos não criado. O backup não será realizado" && exit 1
+
 writeFileLog "Inciando Backup. "
 
 # Se for dia de backup completo, realizar o backup completo
@@ -142,6 +144,9 @@ for dir in `echo $BACKUP_SOURCE`
 
 bdBackup(){
 
+  [ -d $BD_BACKUP_DIR/$TODAY ] || mkdir -p $BD_BACKUP_DIR/$TODAY && touch $BD_LOGFILE && writeBDLog "Diretorio de backup e arquivo de log criados." || logger "[SYSTEM_BACKUP] -> Arquivo de LOG de backup nao criado. O backup do banco de dados não será realizado" && exit 1
+
+
   writeLog "Inciando Backup. "
 
   for file in `echo $DB_FILES`
@@ -171,10 +176,5 @@ rsync -tvruzh --delete $BACKUP_SOURCE $MIRROR >> $FILE_LOGFILE \
 
 }
 
-# Criando Diretorios e Arquivo de LOG 
-
-[ -d $FILE_BACKUP_DIR/$TODAY ] || mkdir -p $FILE_BACKUP_DIR/$TODAY && touch $FILE_LOGFILE && writeFileLog "Diretorio de backup e arquivo de log criados." || logger "[SYSTEM_BACKUP] -> Arquivo de LOG de backup nao criado."
-
-[ -d $BD_BACKUP_DIR/$TODAY ] || mkdir -p $BD_BACKUP_DIR/$TODAY && touch $BD_LOGFILE && writeBDLog "Diretorio de backup e arquivo de log criados." || logger "[SYSTEM_BACKUP] -> Arquivo de LOG de backup nao criado."
-
+# Chamada da função principal
 main
