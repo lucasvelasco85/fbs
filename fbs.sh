@@ -154,14 +154,14 @@ bdBackup(){
 [ ! -d $BD_BACKUP_DIR/$TODAY ] && mkdir -p $BD_BACKUP_DIR/$TODAY ; writeBDLog "Diretorio de backup e arquivo de log criados." || logger "[SYSTEM_BACKUP] -> Arquivo de LOG de backup nao criado. O backup do banco de dados não será realizado" 
 
 
-  writeLog "Inciando Backup. "
+  writeBDLog "Inciando Backup. "
 
   for file in `echo $DB_FILES`
     do
-      writeLog "Iniciando rotina de backup..."
-       gbak -v $FB_DIR/$file $BACKUP_DIR/$TODAY/$file.$TODAY.FBK -user $FB_USER -pass $FB_PASS >> $LOGFILE \
-       && writeLog "Backup do arquivo $file realizado com sucesso." \
-        || writeLog "Erro na realização do backup."
+      writeBDLog "Iniciando rotina de backup..."
+       gbak -v $FB_DIR/$file $BACKUP_DIR/$TODAY/$file.$TODAY.FBK -user $FB_USER -pass $FB_PASS >> $BD_LOGFILE \
+       && writeBDLog "Backup do arquivo $file realizado com sucesso." \
+        || writeBDLog "Erro na realização do backup."
     done
 
   # Apos a realizacao da rotina de backup, exlcuir os backups antigos
