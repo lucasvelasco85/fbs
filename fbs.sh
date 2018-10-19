@@ -49,13 +49,13 @@ MIRROR_LOGFILE="$MIRROR/mirror.$TODAY.log"
 
 main(){
 
-	case $BACKUP_TYPE in
-		0) logger "Parâmetro ajustado para não realizar backup, saindo."; exit 0 ;;
-		1) dataBackup ;;	
-		2) mirrorUpdate && dataBackup ;;
-		3) bdBackup ;;
-		4) dataBackup && bdBackup ;;
-		5) mirrorUpdate && dataBackup && bdBackup ;;
+	case "$BACKUP_TYPE" in
+		"0") logger "Parâmetro ajustado para não realizar backup, saindo."; exit 0 ;;
+		"1") dataBackup ;;	
+		"2") mirrorUpdate && dataBackup ;;
+		"3") bdBackup ;;
+		"4") dataBackup && bdBackup ;;
+		"5") mirrorUpdate && dataBackup && bdBackup ;;
 		*) logger "Parâmetro $BACKUP_TYPE não configurado corretamente"; exit 1 ;;
 	esac
 		
@@ -91,24 +91,26 @@ for n in `seq $KEEPING_DAYS`
     # Retorna datas anteriores no formato do diretorio de backup 
     EXCLUDE_DATE=$(date --date "$n days ago" +%d-%m-%Y)
     
-	# Exclui os backups anteriores ao backup full
-      if [ -d $FILE_BACKUP_DIR/$EXCLUDE_DATE ]
-        then
+     if [ "$BACKUP_TYPE" = "1" ] || [ "$BACKUP_TYPE" = "2" ] || [ "$BACKUP_TYPE" = "5" ]
+      then
+       if [ -d $FILE_BACKUP_DIR/$EXCLUDE_DATE ]
+         then
             rm -rf $FILE_BACKUP_DIR/$EXCLUDE_DATE >> $FILE_LOGFILE \
             && writeFileLog "Backup do dia $EXCLUDE_DATE excluido com sucesso." \
             || writeFileLog "Erro ao excluir diretorio com backup antigo."
-      else
+         else
           writeFileLog "Nenhum backup de arquivos com $n dias encontrado. Backup do dia $EXCLUDE_DATE nao excluido."
-      fi
-	  
-      if [ -d $BD_BACKUP_DIR/$EXCLUDE_DATE ]
-        then
+       fi
+     else  
+       if [ -d $BD_BACKUP_DIR/$EXCLUDE_DATE ]
+         then
             rm -rf $BD_BACKUP_DIR/$EXCLUDE_DATE >> $BD_LOGFILE \
             && writeBDLog "Backup de banco de dados do dia $EXCLUDE_DATE excluido com sucesso." \
             || writeBDLog "Erro ao excluir diretorio com backup antigo."
-      else
+       else
           writeBDLog "Nenhum backup de banco de dados com $n dias encontrado. Backup do dia $EXCLUDE_DATE nao excluido."
-      fi
+       fi
+     fi
   done
 
 }
@@ -154,12 +156,12 @@ bdBackup(){
 [ ! -d $BD_BACKUP_DIR/$TODAY ] && mkdir -p $BD_BACKUP_DIR/$TODAY ; writeBDLog "Diretorio de backup e arquivo de log criados." || logger "[SYSTEM_BACKUP] -> Arquivo de LOG de backup nao criado. O backup do banco de dados não será realizado" 
 
 
-  writeBDLog "Inciando Backup. "
+  writeBDLog "Inciando Backup."
 
-  for file in `echo $DB_FILES`
+  for file in `echo $FDB_FILES`
     do
       writeBDLog "Iniciando rotina de backup..."
-       gbak -v $FB_DIR/$file $BACKUP_DIR/$TODAY/$file.$TODAY.FBK -user $FB_USER -pass $FB_PASS >> $BD_LOGFILE \
+       gbak -v $FB_DIR/$file $BD_BACKUP_DIR/$TODAY/$file.$TODAY.FBK -user $FB_USER -pass $FB_PASS >> $BD_LOGFILE \
        && writeBDLog "Backup do arquivo $file realizado com sucesso." \
         || writeBDLog "Erro na realização do backup."
     done
@@ -167,7 +169,7 @@ bdBackup(){
   # Apos a realizacao da rotina de backup, exlcuir os backups antigos
 
   removeOldBackups
-  writeLog "Fim da rotina de backup total do banco de dados."
+  writeBDLog "Fim da rotina de backup total do banco de dados."
 
 }
 
@@ -183,5 +185,5 @@ rsync -tvruzh --delete $BACKUP_SOURCE $MIRROR >> $MIRROR_LOGFILE \
 
 }
 
-# Chamada da função principal
+
 main
